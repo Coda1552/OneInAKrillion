@@ -1,7 +1,10 @@
 package codyhuh.oneinakrillion.client.models;
 
 import codyhuh.oneinakrillion.OneInAKrillion;
+import codyhuh.oneinakrillion.client.renders.state.KrillRenderState;
+import codyhuh.oneinakrillion.common.entities.Krill;
 import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.ParrotModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
@@ -9,8 +12,11 @@ import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.animal.Parrot;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
-public class KrillModel extends EntityModel<LivingEntityRenderState> {
+public class KrillModel extends EntityModel<KrillRenderState> {
 	public static final ModelLayerLocation KRILL_LAYER = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(OneInAKrillion.MOD_ID, "krill"), "main");
 	private final ModelPart root;
 	private final ModelPart leftAntenna;
@@ -58,25 +64,52 @@ public class KrillModel extends EntityModel<LivingEntityRenderState> {
 	}
 
 	@Override
-	public void setupAnim(LivingEntityRenderState renderState) {
+	public void setupAnim(KrillRenderState renderState) {
 		super.setupAnim(renderState);
-
-		if (renderState.isInWater) {
-			this.root.xRot = renderState.xRot * (float) (Math.PI / 180.0);
-			this.root.yRot = renderState.yRot * (float) (Math.PI / 180.0);
-		}
 
 		float a = renderState.ageInTicks;
 		float b = 0.5F;
 
+		switch (renderState.pose) {
+			case PARTY:
+				this.root.y += Mth.sin(a * 0.3F) * 3.0F * b - 2.5F;
+				this.root.yRot = a * 0.5F;
+				this.root.xRot = -0.698F;
+				this.tail.xRot = -1.1F;
+				this.legs1.xRot = 0.61F;
+				this.legs2.xRot = 0.61F;
+				this.legs3.xRot = 0.61F;
+				this.legs4.xRot = 0.61F;
+			default:
+				break;
+			case SWIMMING:
+				this.root.xRot = renderState.xRot * (float) (Math.PI / 180.0);
+				this.root.yRot = renderState.yRot * (float) (Math.PI / 180.0);
+		}
+
 		this.leftAntenna.xRot = Mth.cos(a * 0.6F) * 0.2F * b;
 		this.rightAntenna.xRot = Mth.sin(a * 0.6F) * 0.2F * b;
 
-		this.legs1.xRot = Mth.cos(a * 0.6F) * 1.4F * b;
-		this.legs2.xRot = Mth.cos(-0.8F + a * 0.6F) * 1.4F * b;
-		this.legs3.xRot = Mth.cos(-1.6F + a * 0.6F) * 1.4F * b;
-		this.legs4.xRot = Mth.cos(-2.4F + a * 0.6F) * 1.4F * b;
+		this.legs1.xRot += Mth.cos(a * 0.6F) * 1.4F * b;
+		this.legs2.xRot += Mth.cos(-0.8F + a * 0.6F) * 1.4F * b;
+		this.legs3.xRot += Mth.cos(-1.6F + a * 0.6F) * 1.4F * b;
+		this.legs4.xRot += Mth.cos(-2.4F + a * 0.6F) * 1.4F * b;
 
-		this.tail.xRot = Mth.cos(a * 0.6F) * 0.8F * b;
+		this.tail.xRot += Mth.cos(a * 0.6F) * 0.8F * b;
+	}
+
+	public static KrillModel.Pose getPose(Krill krill) {
+		if (krill.isPartying()) {
+			return KrillModel.Pose.PARTY;
+		}
+		else {
+			return KrillModel.Pose.SWIMMING;
+		}
+	}
+
+	@OnlyIn(Dist.CLIENT)
+	public enum Pose {
+		PARTY,
+		SWIMMING;
 	}
 }
